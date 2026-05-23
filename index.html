@@ -41,10 +41,106 @@
             overflow: hidden;
         }
 
+        /* 行動裝置切換按鈕 */
+        .mobile-toggle {
+            display: none;
+            position: fixed;
+            bottom: 24px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 1500;
+            background: var(--navy-blue);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius-pill);
+            padding: 14px 32px;
+            font-size: 15px;
+            font-weight: 700;
+            font-family: 'Noto Sans TC', sans-serif;
+            cursor: pointer;
+            box-shadow: 0 6px 20px rgba(44, 62, 80, 0.35);
+            transition: background 0.2s;
+        }
+        .mobile-toggle:active {
+            background: var(--alert-orange);
+        }
+
         @media (max-width: 768px) {
-            body { flex-direction: column; }
-            #sidebar { width: 100% !important; height: 50vh !important; }
-            #map { width: 100% !important; height: 50vh !important; }
+            body {
+                flex-direction: column;
+                overflow: hidden;
+            }
+
+            .mobile-toggle { display: block; }
+
+            #sidebar {
+                width: 100% !important;
+                height: 100vh !important;
+                position: fixed;
+                top: 0; left: 0;
+                z-index: 1100;
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            #sidebar.hidden {
+                transform: translateY(100%);
+                pointer-events: none;
+            }
+
+            #map {
+                width: 100% !important;
+                height: 100vh !important;
+                position: fixed;
+                top: 0; left: 0;
+            }
+
+            .header {
+                padding: 20px 16px 40px 16px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+                margin-bottom: 14px;
+            }
+
+            .search-box {
+                padding: 12px 16px;
+                font-size: 14px;
+                margin-bottom: 12px;
+            }
+
+            .filter-btn {
+                padding: 7px 16px;
+                font-size: 13px;
+            }
+
+            #place-list {
+                padding: 16px;
+                padding-bottom: 80px;
+            }
+
+            .place-card {
+                padding: 18px;
+                margin-bottom: 14px;
+                border-radius: 16px;
+            }
+
+            .place-name { font-size: 16px; }
+            .place-meta { font-size: 12px; }
+            .place-note { font-size: 13px; margin-bottom: 12px; }
+            .tag { padding: 5px 10px; font-size: 11px; }
+
+            /* 讓 popup 不超出螢幕 */
+            .leaflet-popup-content-wrapper {
+                max-width: 260px;
+            }
+        }
+
+        @media (max-width: 380px) {
+            .header h1 { font-size: 20px; }
+            .search-box { font-size: 13px; }
+            .filter-btn { padding: 6px 12px; font-size: 12px; }
+            .place-card { padding: 14px; }
         }
 
         /* 側邊欄樣式 */
@@ -266,6 +362,7 @@
 
     <div id="map"></div>
     <div id="loading">載入最新地圖資料中...</div>
+    <button class="mobile-toggle" id="mobile-toggle" onclick="toggleMobileView()">📍 切換地圖</button>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
@@ -393,6 +490,7 @@
                 `;
 
                 card.addEventListener('click', () => {
+                    handleMobileCardClick();
                     map.flyTo([place.lat, place.lng], 16, { animate: true, duration: 1.2 });
                     marker.openPopup();
                 });
@@ -413,6 +511,31 @@
             searchQuery = e.target.value.toLowerCase();
             renderMapAndList();
         });
+
+        // 行動裝置：列表/地圖切換
+        let mobileShowingMap = false;
+
+        function toggleMobileView() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('mobile-toggle');
+            mobileShowingMap = !mobileShowingMap;
+
+            if (mobileShowingMap) {
+                sidebar.classList.add('hidden');
+                toggleBtn.textContent = '📋 切換列表';
+            } else {
+                sidebar.classList.remove('hidden');
+                toggleBtn.textContent = '📍 切換地圖';
+            }
+            setTimeout(() => map.invalidateSize(), 350);
+        }
+
+        // 點擊卡片時在行動裝置自動切到地圖
+        function handleMobileCardClick() {
+            if (window.innerWidth <= 768 && !mobileShowingMap) {
+                toggleMobileView();
+            }
+        }
 
         loadData();
     </script>
