@@ -338,16 +338,30 @@
             });
         }
 
-        // 渲染畫面
+// 渲染畫面 (升級版搜尋邏輯)
         function renderMapAndList() {
             markersGroup.clearLayers();
             const listContainer = document.getElementById('place-list');
             listContainer.innerHTML = '';
 
+            // 1. 將使用者的搜尋字串用「空白」切分成陣列，過濾掉多餘空白
+            const searchKeywords = searchQuery.split(/\s+/).filter(k => k.trim() !== '');
+
             const filteredPlaces = myPlaces.filter(place => {
+                // 檢查上方按鈕分類
                 const matchesCategory = currentCategory === 'all' || place.category === currentCategory;
-                const searchString = `${place.name} ${place.note} ${place.area} ${place.tags.join(' ')}`.toLowerCase();
-                const matchesSearch = searchString.includes(searchQuery);
+                
+                // 為了讓使用者搜「咖啡廳」也能找到 category 標記為 cafe 的店，我們把中文也加進搜尋字串中
+                let categoryZh = '';
+                if(place.category === 'cafe') categoryZh = '咖啡廳 咖啡';
+                if(place.category === 'restaurant') categoryZh = '餐廳';
+
+                // 將該地點的所有可搜尋資訊，組合成一個巨大的字串
+                const searchString = `${place.name} ${place.note} ${place.area} ${place.tags.join(' ')} ${categoryZh}`.toLowerCase();
+                
+                // 2. 核心邏輯：確保「每一個」使用者輸入的關鍵字，都包含在這個字串中 (AND 邏輯)
+                const matchesSearch = searchKeywords.every(keyword => searchString.includes(keyword));
+
                 return matchesCategory && matchesSearch;
             });
 
@@ -394,6 +408,7 @@
             renderMapAndList();
         }
 
+        // 搜尋欄事件 (這裡不變，維持取得值並觸發重新渲染即可)
         document.getElementById('search-input').addEventListener('input', (e) => {
             searchQuery = e.target.value.toLowerCase();
             renderMapAndList();
