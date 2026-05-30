@@ -418,7 +418,10 @@ function renderMapAndList() {
                 const matchesCategory = currentCategory === 'all' || place.category === currentCategory;
                 
                 // 2. 多關鍵字搜尋邏輯
-                const searchString = `${place.name} ${place.note} ${place.area} ${place.tags.join(' ')}`.toLowerCase();
+                // 先把英文 category 轉換成中文，以便搜尋
+                const categoryForSearch = place.category === 'cafe' ? '咖啡廳' : (place.category === 'restaurant' ? '餐廳' : place.category);
+                // 將中文分類也加入搜尋字串中
+                const searchString = `${place.name} ${place.note} ${place.area} ${categoryForSearch} ${place.tags.join(' ')}`.toLowerCase();
                 const keywords = searchQuery.trim().split(/\s+/).filter(k => k !== '');
                 const matchesSearch = keywords.length === 0 || keywords.every(kw => searchString.includes(kw));
                 
