@@ -413,11 +413,20 @@ function renderMapAndList() {
             listContainer.innerHTML = '';
 
             // 更新全域變數，讓抽籤功能知道現在有哪些店可以抽
-            currentFilteredPlaces = myPlaces.filter(place => {
+            const filteredPlaces = myPlaces.filter(place => {
+                // 1. 判斷主分類
                 const matchesCategory = currentCategory === 'all' || place.category === currentCategory;
+                
+                // 2. 多關鍵字搜尋邏輯
                 const searchString = `${place.name} ${place.note} ${place.area} ${place.tags.join(' ')}`.toLowerCase();
-                const matchesSearch = searchString.includes(searchQuery);
+                // 將輸入的文字利用空白切開成陣列，並過濾掉多餘的空白
+                const keywords = searchQuery.trim().split(/\s+/).filter(k => k !== '');
+                // 檢查是否「每一個 (every)」關鍵字都有出現在資訊裡 (AND 邏輯)
+                const matchesSearch = keywords.length === 0 || keywords.every(kw => searchString.includes(kw));
+                
+                // 3. 判斷標籤
                 const matchesTag = currentActiveTag === null || place.tags.includes(currentActiveTag);
+                
                 return matchesCategory && matchesSearch && matchesTag;
             });
 
