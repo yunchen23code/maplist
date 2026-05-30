@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>My Personal Map Space</title>
+    <title>Ethan 的私房地圖</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
     
@@ -211,6 +211,20 @@
             background: var(--surface-color); padding: 16px 28px; border-radius: var(--radius-pill); box-shadow: var(--shadow-hover);
         }
 
+        /* 🎲 隨機抽籤按鈕專屬樣式 */
+        .random-btn {
+            background: linear-gradient(135deg, #fdfbfb 0%, #ebedee 100%);
+            color: var(--text-main);
+            border: 1px solid #d2d2d7;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+        }
+        .random-btn:hover {
+            background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%); /* 懸浮時會有淡淡的炫彩紫藍色 */
+            color: #ffffff;
+            border-color: transparent;
+            transform: translateY(-2px);
+        }
+
         /* 📱 ── RWD 手機版全螢幕沉浸體驗 ── */
         .mobile-toggle { display: none; }
 
@@ -278,6 +292,7 @@
                 <button class="filter-btn active" onclick="filterCategory('all', this)">全部</button>
                 <button class="filter-btn" onclick="filterCategory('restaurant', this)">餐廳</button>
                 <button class="filter-btn" onclick="filterCategory('cafe', this)">咖啡廳</button>
+                <button class="filter-btn random-btn" onclick="pickRandomPlace()">🎲 隨機抽一家</button>
             </div>
             <div id="tag-filters" class="filter-group"></div>
         </div>
@@ -297,6 +312,7 @@
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8Fd0IWRe8LJUGvxjUXgmw5_AlXGfdokhoEKb19cAp_mLMSWM06FKMLA0nv03DcJ0grV5VYOnTCYr/pub?output=csv";
 
         let myPlaces = [];
+        let currentFilteredPlaces = []; // 新增這行：用來記住目前篩選出來的名單
         let currentCategory = 'all';
         let searchQuery = '';
         let currentActiveTag = null;
@@ -391,12 +407,13 @@
             renderMapAndList();
         }
 
-        function renderMapAndList() {
+function renderMapAndList() {
             markersGroup.clearLayers();
             const listContainer = document.getElementById('place-list');
             listContainer.innerHTML = '';
 
-            const filteredPlaces = myPlaces.filter(place => {
+            // 更新全域變數，讓抽籤功能知道現在有哪些店可以抽
+            currentFilteredPlaces = myPlaces.filter(place => {
                 const matchesCategory = currentCategory === 'all' || place.category === currentCategory;
                 const searchString = `${place.name} ${place.note} ${place.area} ${place.tags.join(' ')}`.toLowerCase();
                 const matchesSearch = searchString.includes(searchQuery);
@@ -404,7 +421,7 @@
                 return matchesCategory && matchesSearch && matchesTag;
             });
 
-            filteredPlaces.forEach(place => {
+            currentFilteredPlaces.forEach(place => {
                 const marker = L.marker([place.lat, place.lng]);
                 const popupContent = `
                     <div class="popup-title">${place.name}</div>
@@ -413,6 +430,9 @@
                 `;
                 marker.bindPopup(popupContent);
                 markersGroup.addLayer(marker);
+                
+                // 把 marker 存進 place 物件中，方便抽籤時可以直接打開彈窗
+                place.marker = marker;
 
                 const card = document.createElement('div');
                 card.className = 'place-card';
@@ -450,7 +470,37 @@
             searchQuery = e.target.value.toLowerCase();
             renderMapAndList();
         });
+// 🎲 隨機抽籤功能
+        function pickRandomPlace() {
+            // 防呆機制：如果目前篩選條件下沒有店
+            if (currentFilteredPlaces.length === 0) {
+                alert("目前條件沒有找到店家喔！請換個標籤試試。");
+                return;
+            }
 
+            // 1. 隨機抽取一家店
+            const randomIndex = Math.floor(Math.random() * currentFilteredPlaces.length);
+            const luckyPlace = currentFilteredPlaces[randomIndex];
+
+            // 2. 如果是手機版且目前在列表畫面，自動切換到地圖
+            if (window.innerWidth <= 768 && !showingMap) {
+                toggleMobileView();
+            }
+
+            // 3. 畫面優雅地飛向目標定點
+            map.flyTo([luckyPlace.lat, luckyPlace.lng], 16, { animate: true, duration: 1.5 });
+            
+            // 4. 等飛行時間結束後，打開彈窗並加上「驚喜提示」
+            setTimeout(() => {
+                luckyPlace.marker.setPopupContent(`
+                    <div style="font-size:13px; color:#0071e3; font-weight:700; margin-bottom:6px;">🎲 今晚就決定是你了！</div>
+                    <div class="popup-title">${luckyPlace.name}</div>
+                    <div style="font-size:14px; color:#666; line-height:1.5;">${luckyPlace.note || luckyPlace.area}</div>
+                    <a href="${luckyPlace.googleMapUrl}" target="_blank" class="popup-link">在 Google Maps 中開啟 ↗</a>
+                `);
+                luckyPlace.marker.openPopup();
+            }, 1500);
+        }
         loadData();
     </script>
 </body>
