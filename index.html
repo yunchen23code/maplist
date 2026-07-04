@@ -226,6 +226,29 @@
         /* 圖磚調暖，貼合桃色復古調 */
         .leaflet-tile { filter: saturate(1.02) contrast(0.98) brightness(1.03) hue-rotate(-6deg); }
 
+        /* 定位「我的位置」按鈕 */
+        #locate-btn {
+            position: absolute;
+            right: 16px;
+            bottom: 32px;
+            z-index: 600;
+            width: 46px;
+            height: 46px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-color);
+            border: 1px solid var(--ink);
+            border-radius: var(--radius-ui);
+            font-size: 20px;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        #locate-btn:hover { background: var(--brand-soft); }
+        #locate-btn .ph { margin-right: 0; }
+        #locate-btn.locating { background: var(--brand); }
+
         .leaflet-popup-content-wrapper {
             border-radius: var(--radius-ui);
             padding: 14px;
@@ -417,6 +440,32 @@
         }).addTo(map);
 
         let markersGroup = L.layerGroup().addTo(map);
+
+        // 定位使用者目前位置
+        let userMarker = null, userCircle = null;
+        function locateUser() {
+            document.getElementById('locate-btn').classList.add('locating');
+            // 手機在列表畫面時，先切到地圖才看得到定位結果
+            if (window.innerWidth <= 768 && !showingMap) toggleMobileView();
+            map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+        }
+        map.on('locationfound', function(e) {
+            document.getElementById('locate-btn').classList.remove('locating');
+            if (userMarker) map.removeLayer(userMarker);
+            if (userCircle) map.removeLayer(userCircle);
+            userCircle = L.circle(e.latlng, {
+                radius: e.accuracy, color: '#3A5DA0', weight: 1,
+                fillColor: '#3A5DA0', fillOpacity: 0.12
+            }).addTo(map);
+            userMarker = L.circleMarker(e.latlng, {
+                radius: 8, color: '#000000', weight: 2,
+                fillColor: '#3A5DA0', fillOpacity: 1
+            }).addTo(map).bindPopup('<div class="popup-title">你在這裡</div>').openPopup();
+        });
+        map.on('locationerror', function() {
+            document.getElementById('locate-btn').classList.remove('locating');
+            alert('無法取得你的位置，請確認瀏覽器已允許定位權限，並在 HTTPS（例如 GitHub Pages）環境下開啟。');
+        });
 
         function toggleMobileView() {
             showingMap = !showingMap;
