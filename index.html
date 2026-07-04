@@ -252,6 +252,30 @@
             border: 1px solid var(--ink); box-shadow: none;
         }
 
+        /* 定位按鈕 */
+        #locate-btn {
+            position: absolute;
+            right: 16px;
+            bottom: 24px;
+            z-index: 1500;
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--surface-color);
+            border: 1px solid var(--ink);
+            border-radius: var(--radius-ui);
+            color: var(--text-main);
+            font-size: 22px;
+            cursor: pointer;
+            box-shadow: none;
+            transition: background 0.15s ease;
+        }
+        #locate-btn:hover { background: var(--brand-soft); }
+        #locate-btn.locating { background: var(--brand); }
+        #locate-btn .ph { margin-right: 0; }
+
         /* 隨機抽籤按鈕專屬樣式 */
         /* 隨機按鈕：中性黑實心，維持全頁單一藍強調色 */
         .random-btn {
@@ -319,6 +343,10 @@
                 transition: transform 0.2s cubic-bezier(0.25, 0.8, 0.25, 1), background 0.3s ease;
             }
             .mobile-toggle:active { transform: translateX(-50%) scale(0.92); }
+
+            /* 手機清單畫面時不顯示定位鈕，切到地圖才出現 */
+            #locate-btn { display: none; }
+            body.show-map #locate-btn { display: flex; bottom: 110px; }
         }
     </style>
 </head>
@@ -348,6 +376,7 @@
     </div>
 
     <div id="map"></div>
+    <button id="locate-btn" onclick="locateUser()" title="定位我的位置" aria-label="定位我的位置"><i class="ph ph-crosshair"></i></button>
     <div id="loading">載入最新地圖資料中...</div>
 
     <button id="mobile-toggle-btn" class="mobile-toggle" onclick="toggleMobileView()"><i class="ph ph-map-trifold"></i>切換地圖</button>
@@ -455,6 +484,35 @@
                 container.appendChild(btn);
             });
         }
+
+        // 定位使用者目前位置
+        let userMarker = null;
+        function locateUser() {
+            const btn = document.getElementById('locate-btn');
+            if (!navigator.geolocation) {
+                alert('你的瀏覽器不支援定位功能');
+                return;
+            }
+            btn.classList.add('locating');
+            // 手機若在清單畫面，先切到地圖
+            if (window.innerWidth <= 768 && !showingMap) {
+                toggleMobileView();
+            }
+            map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+        }
+        map.on('locationfound', function(e) {
+            document.getElementById('locate-btn').classList.remove('locating');
+            if (userMarker) { map.removeLayer(userMarker); }
+            userMarker = L.circleMarker(e.latlng, {
+                radius: 9, color: '#000000', weight: 2,
+                fillColor: '#3A5DA0', fillOpacity: 1
+            }).addTo(map);
+            userMarker.bindPopup('<div class="popup-title">你在這裡</div>').openPopup();
+        });
+        map.on('locationerror', function(e) {
+            document.getElementById('locate-btn').classList.remove('locating');
+            alert('無法取得定位：' + e.message + '\n（定位需要 HTTPS 網頁，並允許瀏覽器的位置權限）');
+        });
 
         function toggleTags() {
             const container = document.getElementById('tag-filters');
