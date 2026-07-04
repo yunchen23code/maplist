@@ -292,6 +292,13 @@
                 <button class="filter-btn active" onclick="filterCategory('all', this)">全部</button>
                 <button class="filter-btn" onclick="filterCategory('restaurant', this)">餐廳</button>
                 <button class="filter-btn" onclick="filterCategory('cafe', this)">咖啡廳</button>
+                <button class="filter-btn" onclick="filterCategory('snack', this)">小吃</button>
+                <button class="filter-btn" onclick="filterCategory('dessert', this)">甜點</button>
+                <button class="filter-btn" onclick="filterCategory('beverage', this)">飲料</button>
+                <button class="filter-btn" onclick="filterCategory('bar', this)">酒吧</button>
+                <button class="filter-btn" onclick="filterCategory('spot', this)">景點</button>
+                <button class="filter-btn" onclick="filterCategory('shop', this)">商店</button>
+                <button class="filter-btn" onclick="filterCategory('hotel', this)">住宿</button>
                 <button class="filter-btn random-btn" onclick="pickRandomPlace()">🎲 隨機抽一家</button>
             </div>
             <div id="tag-filters" class="filter-group"></div>
@@ -310,6 +317,19 @@
     <script>
         // 🚨 重要：請將下方的網址替換成你自己的 Google Sheets CSV 發布網址
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8Fd0IWRe8LJUGvxjUXgmw5_AlXGfdokhoEKb19cAp_mLMSWM06FKMLA0nv03DcJ0grV5VYOnTCYr/pub?output=csv";
+
+        // 分類英文 → 中文對照表
+        const CATEGORY_NAMES = {
+            restaurant: '餐廳',
+            cafe: '咖啡廳',
+            snack: '小吃',
+            dessert: '甜點',
+            beverage: '飲料',
+            bar: '酒吧',
+            spot: '景點',
+            shop: '商店',
+            hotel: '住宿'
+        };
 
         let myPlaces = [];
         let currentFilteredPlaces = []; // 新增這行：用來記住目前篩選出來的名單
@@ -419,7 +439,7 @@ function renderMapAndList() {
                 
                 // 2. 多關鍵字搜尋邏輯
                 // 先把英文 category 轉換成中文，以便搜尋
-                const categoryForSearch = place.category === 'cafe' ? '咖啡廳' : (place.category === 'restaurant' ? '餐廳' : place.category);
+                const categoryForSearch = CATEGORY_NAMES[place.category] || place.category;
                 // 將中文分類也加入搜尋字串中
                 const searchString = `${place.name} ${place.note} ${place.area} ${categoryForSearch} ${place.tags.join(' ')}`.toLowerCase();
                 const keywords = searchQuery.trim().split(/\s+/).filter(k => k !== '');
@@ -449,7 +469,7 @@ function renderMapAndList() {
                 card.className = 'place-card';
                 
                 let tagsHtml = place.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
-                let categoryName = place.category === 'cafe' ? '咖啡廳' : (place.category === 'restaurant' ? '餐廳' : place.category);
+                let categoryName = CATEGORY_NAMES[place.category] || place.category;
 
                 card.innerHTML = `
                     <div class="place-name">${place.name}</div>
