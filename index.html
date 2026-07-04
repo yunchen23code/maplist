@@ -140,13 +140,29 @@
             overflow-x: visible;
         }
 
-        /* 標籤區：換行全部顯示，整個側欄一起捲動，標籤一定看得到 */
+        /* 標籤區：預設收起，點按鈕才展開；用 display 切換，穩定可靠 */
         #tag-filters {
             flex-wrap: wrap;
             overflow: visible;
             margin-bottom: 12px;
             padding-bottom: 4px;
         }
+        #tag-filters.hidden { display: none; }
+
+        .tag-toggle {
+            display: inline-block;
+            margin-bottom: 12px;
+            padding: 10px 16px;
+            background: var(--surface-color);
+            border: 1px solid var(--ink);
+            border-radius: var(--radius-ui);
+            font-size: 14px;
+            font-weight: 600;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .tag-toggle:hover { background: var(--brand-soft); }
 
         /* Phosphor icon 對齊（取代原本的 emoji） */
         .ph { vertical-align: -2px; margin-right: 5px; }
@@ -325,7 +341,8 @@
                 <button class="filter-btn" onclick="filterCategory('hotel', this)">住宿</button>
                 <button class="filter-btn random-btn" onclick="pickRandomPlace()"><i class="ph ph-dice-five"></i>隨機抽一家</button>
             </div>
-            <div id="tag-filters" class="filter-group"></div>
+            <button id="tag-toggle" class="tag-toggle" onclick="toggleTags()">篩選標籤 ▾</button>
+            <div id="tag-filters" class="filter-group hidden"></div>
         </div>
         <div id="place-list"></div>
     </div>
@@ -437,6 +454,13 @@
                 btn.onclick = () => toggleTagFilter(tag, btn);
                 container.appendChild(btn);
             });
+        }
+
+        function toggleTags() {
+            const container = document.getElementById('tag-filters');
+            const btn = document.getElementById('tag-toggle');
+            const isHidden = container.classList.toggle('hidden');
+            btn.textContent = isHidden ? '篩選標籤 ▾' : '收合標籤 ▲';
         }
 
         function toggleTagFilter(tag, button) {
