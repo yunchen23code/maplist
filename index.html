@@ -59,8 +59,8 @@
             height: 100%;
             background: var(--surface-color);
             box-shadow: none;
-            display: flex;
-            flex-direction: column;
+            display: block;
+            overflow-y: auto;
             z-index: 1000;
             border-right: 1px solid var(--ink);
             transition: transform 0.4s cubic-bezier(0.25, 1, 0.5, 1), opacity 0.3s ease;
@@ -140,29 +140,13 @@
             overflow-x: visible;
         }
 
-        /* 標籤區改為換行 + 可折疊，避免上百個標籤塞成一長條 */
+        /* 標籤區：換行全部顯示，整個側欄一起捲動，標籤一定看得到 */
         #tag-filters {
             flex-wrap: wrap;
-            overflow: hidden;
-            margin-bottom: 4px;
+            overflow: visible;
+            margin-bottom: 12px;
             padding-bottom: 4px;
         }
-        #tag-filters.collapsed { max-height: 86px; }
-
-        .tag-toggle {
-            display: none;
-            margin: 0 0 12px 0;
-            padding: 6px 12px;
-            background: var(--surface-color);
-            border: 1px solid var(--ink);
-            border-radius: var(--radius-ui);
-            font-size: 12px;
-            font-weight: 700;
-            color: var(--text-main);
-            cursor: pointer;
-            transition: background 0.15s ease;
-        }
-        .tag-toggle:hover { background: var(--brand-softer); }
 
         /* Phosphor icon 對齊（取代原本的 emoji） */
         .ph { vertical-align: -2px; margin-right: 5px; }
@@ -187,10 +171,7 @@
 
         /* ── 列表與卡片區域 ── */
         #place-list {
-            flex: 1;
-            overflow-y: auto;
             padding: 0 24px 24px 24px;
-            -webkit-overflow-scrolling: touch;
         }
 
         .place-card {
@@ -344,8 +325,7 @@
                 <button class="filter-btn" onclick="filterCategory('hotel', this)">住宿</button>
                 <button class="filter-btn random-btn" onclick="pickRandomPlace()"><i class="ph ph-dice-five"></i>隨機抽一家</button>
             </div>
-            <div id="tag-filters" class="filter-group collapsed"></div>
-            <button id="tag-toggle" class="tag-toggle" onclick="toggleTagExpand()">更多標籤 ▾</button>
+            <div id="tag-filters" class="filter-group"></div>
         </div>
         <div id="place-list"></div>
     </div>
@@ -457,15 +437,6 @@
                 btn.onclick = () => toggleTagFilter(tag, btn);
                 container.appendChild(btn);
             });
-            // 標籤數量多才顯示「更多／收合」切換
-            document.getElementById('tag-toggle').style.display = tags.length > 14 ? 'inline-block' : 'none';
-        }
-
-        function toggleTagExpand() {
-            const container = document.getElementById('tag-filters');
-            const btn = document.getElementById('tag-toggle');
-            container.classList.toggle('collapsed');
-            btn.textContent = container.classList.contains('collapsed') ? '更多標籤 ▾' : '收合標籤 ▲';
         }
 
         function toggleTagFilter(tag, button) {
