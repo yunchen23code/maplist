@@ -22,13 +22,13 @@
             --body: #374151;               /* 內文 */
             --ink: #000000;                /* 招牌黑色粗邊框 */
 
-            --brand: #FFD1BA;              /* 暖桃主色 */
-            --brand-medium: #FFDBC9;
-            --brand-soft: #FFE3D5;
-            --brand-softer: #FFF0E8;
-            --brand-strong: #D4A68A;
+            --brand: #BAD4FF;              /* 暖桃主色 */
+            --brand-medium: #C9DBFF;
+            --brand-soft: #D5E3FF;
+            --brand-softer: #E8F0FF;
+            --brand-strong: #8AAAD4;
             --accent-orange: #FB923C;      /* 隨機按鈕實心橘 */
-            --link: #A0553A;               /* 連結咖啡色（達 WCAG AA） */
+            --link: #3A5DA0;               /* 連結咖啡色（達 WCAG AA） */
             --hover-bg: #F9FAFB;           /* 卡片 hover 底色 */
 
             --radius-card: 6px;            /* 復古小圓角 */
@@ -201,9 +201,9 @@
         }
 
         /* ── 地圖與彈窗區域 ── */
-        #map { flex: 1; height: 100%; z-index: 500; background: #FFF7ED; }
+        #map { flex: 1; height: 100%; z-index: 500; background: #EEF4FF; }
         /* 圖磚調暖，貼合桃色復古調 */
-        .leaflet-tile { filter: sepia(0.28) saturate(1.05) contrast(0.96) brightness(1.02); }
+        .leaflet-tile { filter: saturate(1.02) contrast(0.98) brightness(1.03) hue-rotate(-6deg); }
 
         .leaflet-popup-content-wrapper {
             border-radius: var(--radius-ui);
@@ -222,7 +222,7 @@
             font-weight: 600;
             transition: color 0.2s ease;
         }
-        .popup-link:hover { color: #7a3e2a; }
+        .popup-link:hover { color: #2c4372; }
 
         #loading {
             position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -542,7 +542,7 @@ function renderMapAndList() {
             // 4. 等飛行時間結束後，打開彈窗並加上「驚喜提示」
             setTimeout(() => {
                 luckyPlace.marker.setPopupContent(`
-                    <div style="font-size:13px; color:#A0553A; font-weight:700; margin-bottom:6px;">🎲 今晚就決定是你了！</div>
+                    <div style="font-size:13px; color:#3A5DA0; font-weight:700; margin-bottom:6px;">🎲 今晚就決定是你了！</div>
                     <div class="popup-title">${luckyPlace.name}</div>
                     <div style="font-size:14px; color:#666; line-height:1.5;">${luckyPlace.note || luckyPlace.area}</div>
                     <a href="${luckyPlace.googleMapUrl}" target="_blank" class="popup-link">在 Google Maps 中開啟 ↗</a>
