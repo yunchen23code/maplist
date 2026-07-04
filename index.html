@@ -6,14 +6,15 @@
     <title>Ethan 的私房地圖</title>
     
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&family=Noto+Sans+TC:wght@400;500;600;700&display=swap" rel="stylesheet">
     
     <style>
-        /* 🎨 視覺系統核心：CSS 變數 (Design Tokens) */
-        /* 🎨 復古設計系統 (retro-design-system) token */
+        /* 視覺系統核心：CSS 變數 (Design Tokens) */
+        /* 復古設計系統 (retro-design-system) token */
         :root {
             --bg-color: #ffffff;           /* 純白畫布 */
             --surface-color: #ffffff;      /* 純白卡片底色 */
@@ -27,13 +28,11 @@
             --brand-soft: #D5E3FF;
             --brand-softer: #E8F0FF;
             --brand-strong: #8AAAD4;
-            --accent-orange: #FB923C;      /* 隨機按鈕實心橘 */
-            --link: #3A5DA0;               /* 連結咖啡色（達 WCAG AA） */
+            --link: #3A5DA0;               /* 連結藍（達 WCAG AA） */
             --hover-bg: #F9FAFB;           /* 卡片 hover 底色 */
 
-            --radius-card: 6px;            /* 復古小圓角 */
+            --radius-card: 6px;            /* 復古小圓角，全站統一方角 */
             --radius-ui: 6px;
-            --radius-pill: 9999px;         /* 藥丸按鈕 */
         }
 
         * {
@@ -117,7 +116,7 @@
             padding: 12px 18px;
             border: 1px solid var(--ink);
             background: var(--surface-color);
-            border-radius: var(--radius-pill);
+            border-radius: var(--radius-ui);
             font-size: 14px;
             font-weight: 600;
             color: var(--text-main);
@@ -141,7 +140,32 @@
             overflow-x: visible;
         }
 
-        #tag-filters { margin-bottom: 4px; padding-bottom: 12px; }
+        /* 標籤區改為換行 + 可折疊，避免上百個標籤塞成一長條 */
+        #tag-filters {
+            flex-wrap: wrap;
+            overflow: hidden;
+            margin-bottom: 4px;
+            padding-bottom: 4px;
+        }
+        #tag-filters.collapsed { max-height: 86px; }
+
+        .tag-toggle {
+            display: none;
+            margin: 0 0 12px 0;
+            padding: 6px 12px;
+            background: var(--surface-color);
+            border: 1px solid var(--ink);
+            border-radius: var(--radius-ui);
+            font-size: 12px;
+            font-weight: 700;
+            color: var(--text-main);
+            cursor: pointer;
+            transition: background 0.15s ease;
+        }
+        .tag-toggle:hover { background: var(--brand-softer); }
+
+        /* Phosphor icon 對齊（取代原本的 emoji） */
+        .ph { vertical-align: -2px; margin-right: 5px; }
         
         .tag-btn {
             padding: 7px 13px;
@@ -231,20 +255,21 @@
             border: 1px solid var(--ink); box-shadow: none;
         }
 
-        /* 🎲 隨機抽籤按鈕專屬樣式 */
+        /* 隨機抽籤按鈕專屬樣式 */
+        /* 隨機按鈕：中性黑實心，維持全頁單一藍強調色 */
         .random-btn {
-            background: var(--accent-orange);
-            color: var(--text-main);
+            background: var(--ink);
+            color: #ffffff;
             border: 1px solid var(--ink);
             box-shadow: none;
         }
         .random-btn:hover {
-            background: #F97316;
-            color: var(--text-main);
+            background: #2b2b2b;
+            color: #ffffff;
             border-color: var(--ink);
         }
 
-        /* 📱 ── RWD 手機版全螢幕沉浸體驗 ── */
+        /* ── RWD 手機版全螢幕沉浸體驗 ── */
         .mobile-toggle { display: none; }
 
         @media (max-width: 768px) {
@@ -289,7 +314,7 @@
                 color: white;
                 border: 1px solid #000000;
                 padding: 16px 32px;
-                border-radius: var(--radius-pill);
+                border-radius: var(--radius-ui);
                 font-size: 15px;
                 font-weight: 600;
                 box-shadow: none;
@@ -317,9 +342,10 @@
                 <button class="filter-btn" onclick="filterCategory('spot', this)">景點</button>
                 <button class="filter-btn" onclick="filterCategory('shop', this)">商店</button>
                 <button class="filter-btn" onclick="filterCategory('hotel', this)">住宿</button>
-                <button class="filter-btn random-btn" onclick="pickRandomPlace()">🎲 隨機抽一家</button>
+                <button class="filter-btn random-btn" onclick="pickRandomPlace()"><i class="ph ph-dice-five"></i>隨機抽一家</button>
             </div>
-            <div id="tag-filters" class="filter-group"></div>
+            <div id="tag-filters" class="filter-group collapsed"></div>
+            <button id="tag-toggle" class="tag-toggle" onclick="toggleTagExpand()">更多標籤 ▾</button>
         </div>
         <div id="place-list"></div>
     </div>
@@ -327,13 +353,13 @@
     <div id="map"></div>
     <div id="loading">載入最新地圖資料中...</div>
 
-    <button id="mobile-toggle-btn" class="mobile-toggle" onclick="toggleMobileView()">🗺️ 切換地圖</button>
+    <button id="mobile-toggle-btn" class="mobile-toggle" onclick="toggleMobileView()"><i class="ph ph-map-trifold"></i>切換地圖</button>
 
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
 
     <script>
-        // 🚨 重要：請將下方的網址替換成你自己的 Google Sheets CSV 發布網址
+        // 重要：請將下方的網址替換成你自己的 Google Sheets CSV 發布網址
         const SHEET_CSV_URL = "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu8Fd0IWRe8LJUGvxjUXgmw5_AlXGfdokhoEKb19cAp_mLMSWM06FKMLA0nv03DcJ0grV5VYOnTCYr/pub?output=csv";
 
         // 分類英文 → 中文對照表
@@ -371,17 +397,17 @@
             const btn = document.getElementById('mobile-toggle-btn');
             if (showingMap) {
                 document.body.classList.add('show-map');
-                btn.innerText = '📄 顯示列表';
+                btn.innerHTML = '<i class="ph ph-list"></i>顯示列表';
                 setTimeout(() => map.invalidateSize(), 300);
             } else {
                 document.body.classList.remove('show-map');
-                btn.innerText = '🗺️ 切換地圖';
+                btn.innerHTML = '<i class="ph ph-map-trifold"></i>切換地圖';
             }
         }
 
         function loadData() {
             if(SHEET_CSV_URL.includes("請將你的")) {
-                document.getElementById('loading').innerText = "⚠️ 錯誤：尚未填寫 Google Sheets 網址";
+                document.getElementById('loading').innerHTML = '<i class="ph ph-warning"></i>錯誤：尚未填寫 Google Sheets 網址';
                 return;
             }
 
@@ -431,6 +457,15 @@
                 btn.onclick = () => toggleTagFilter(tag, btn);
                 container.appendChild(btn);
             });
+            // 標籤數量多才顯示「更多／收合」切換
+            document.getElementById('tag-toggle').style.display = tags.length > 14 ? 'inline-block' : 'none';
+        }
+
+        function toggleTagExpand() {
+            const container = document.getElementById('tag-filters');
+            const btn = document.getElementById('tag-toggle');
+            container.classList.toggle('collapsed');
+            btn.textContent = container.classList.contains('collapsed') ? '更多標籤 ▾' : '收合標籤 ▲';
         }
 
         function toggleTagFilter(tag, button) {
@@ -450,7 +485,7 @@ function renderMapAndList() {
             const listContainer = document.getElementById('place-list');
             listContainer.innerHTML = '';
 
-            // 🌟 修正點：必須將結果存入「全域變數」 currentFilteredPlaces，讓地圖與抽籤功能都能同步抓到資料！
+            // 修正點：必須將結果存入「全域變數」 currentFilteredPlaces，讓地圖與抽籤功能都能同步抓到資料！
             currentFilteredPlaces = myPlaces.filter(place => {
                 // 1. 判斷主分類
                 const matchesCategory = currentCategory === 'all' || place.category === currentCategory;
@@ -519,7 +554,7 @@ function renderMapAndList() {
             searchQuery = e.target.value.toLowerCase();
             renderMapAndList();
         });
-// 🎲 隨機抽籤功能
+// 隨機抽籤功能
         function pickRandomPlace() {
             // 防呆機制：如果目前篩選條件下沒有店
             if (currentFilteredPlaces.length === 0) {
@@ -542,7 +577,7 @@ function renderMapAndList() {
             // 4. 等飛行時間結束後，打開彈窗並加上「驚喜提示」
             setTimeout(() => {
                 luckyPlace.marker.setPopupContent(`
-                    <div style="font-size:13px; color:#3A5DA0; font-weight:700; margin-bottom:6px;">🎲 今晚就決定是你了！</div>
+                    <div style="font-size:13px; color:#3A5DA0; font-weight:700; margin-bottom:6px;"><i class="ph ph-dice-five"></i>今晚就決定是你了！</div>
                     <div class="popup-title">${luckyPlace.name}</div>
                     <div style="font-size:14px; color:#666; line-height:1.5;">${luckyPlace.note || luckyPlace.area}</div>
                     <a href="${luckyPlace.googleMapUrl}" target="_blank" class="popup-link">在 Google Maps 中開啟 ↗</a>
