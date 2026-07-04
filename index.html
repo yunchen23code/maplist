@@ -5,8 +5,10 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Ethan 的私房地圖</title>
     
-    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
-    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+          integrity="sha384-sHL9NAb7lN7rfvG5lfHpm643Xkcjzp4jFvuavGOndn6pjVqS6ny56CAt3nsEVT4H" crossorigin="anonymous" />
+    <link rel="stylesheet" href="https://unpkg.com/@phosphor-icons/web@2.1.1/src/regular/style.css"
+          integrity="sha384-6p9AefaqUhEVheRlj1mpAkbngHXy9mbYMrIdcIt4Jlc9lOLIablJq3bBsLOjGwZ7" crossorigin="anonymous" />
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -404,8 +406,10 @@
 
     <button id="mobile-toggle-btn" class="mobile-toggle" onclick="toggleMobileView()"><i class="ph ph-map-trifold"></i>切換地圖</button>
 
-    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+            integrity="sha384-cxOPjt7s7Iz04uaHJceBmS+qpjv2JkIHNVcuOrM+YHwZOmJGBXI00mdUXEq65HTH" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"
+            integrity="sha384-D/t0ZMqQW31H3az8ktEiNb39wyKnS82iFY52QPACM+IjKW3jDUhyIgh2PApRqJZs" crossorigin="anonymous"></script>
 
     <script>
         // 重要：請將下方的網址替換成你自己的 Google Sheets CSV 發布網址
@@ -423,6 +427,21 @@
             shop: '商店',
             hotel: '住宿'
         };
+
+        // 安全性：HTML 跳脫，避免試算表資料被當成程式碼執行（防 XSS）
+        function esc(str) {
+            return String(str == null ? '' : str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;')
+                .replace(/'/g, '&#39;');
+        }
+        // 只允許 http/https 連結，擋掉 javascript: 等危險協定
+        function safeUrl(url) {
+            const u = String(url == null ? '' : url).trim();
+            return /^https?:\/\//i.test(u) ? u : '';
+        }
 
         let myPlaces = [];
         let currentFilteredPlaces = []; // 新增這行：用來記住目前篩選出來的名單
@@ -580,10 +599,11 @@ function renderMapAndList() {
             // 這裡使用 currentFilteredPlaces 來跑迴圈，地標就會回來了
             currentFilteredPlaces.forEach(place => {
                 const marker = L.marker([place.lat, place.lng]);
+                const popupUrl = safeUrl(place.googleMapUrl);
                 const popupContent = `
-                    <div class="popup-title">${place.name}</div>
-                    <div style="font-size:14px; color:#666; line-height:1.5;">${place.note || place.area}</div>
-                    <a href="${place.googleMapUrl}" target="_blank" class="popup-link">在 Google Maps 中開啟 ↗</a>
+                    <div class="popup-title">${esc(place.name)}</div>
+                    <div style="font-size:14px; color:#666; line-height:1.5;">${esc(place.note || place.area)}</div>
+                    ${popupUrl ? `<a href="${esc(popupUrl)}" target="_blank" rel="noopener noreferrer" class="popup-link">在 Google Maps 中開啟 ↗</a>` : ''}
                 `;
                 marker.bindPopup(popupContent);
                 markersGroup.addLayer(marker);
@@ -594,13 +614,13 @@ function renderMapAndList() {
                 const card = document.createElement('div');
                 card.className = 'place-card';
                 
-                let tagsHtml = place.tags.map(tag => `<span class="tag">#${tag}</span>`).join('');
+                let tagsHtml = place.tags.map(tag => `<span class="tag">#${esc(tag)}</span>`).join('');
                 let categoryName = CATEGORY_NAMES[place.category] || place.category;
 
                 card.innerHTML = `
-                    <div class="place-name">${place.name}</div>
-                    <div class="place-meta">${place.area} ${place.area && categoryName && categoryName !== 'other' ? '·' : ''} ${categoryName !== 'other' ? categoryName : ''}</div>
-                    ${place.note ? `<div class="place-note">${place.note}</div>` : ''}
+                    <div class="place-name">${esc(place.name)}</div>
+                    <div class="place-meta">${esc(place.area)} ${place.area && categoryName && categoryName !== 'other' ? '·' : ''} ${categoryName !== 'other' ? esc(categoryName) : ''}</div>
+                    ${place.note ? `<div class="place-note">${esc(place.note)}</div>` : ''}
                     <div>${tagsHtml}</div>
                 `;
 
@@ -649,11 +669,12 @@ function renderMapAndList() {
             
             // 4. 等飛行時間結束後，打開彈窗並加上「驚喜提示」
             setTimeout(() => {
+                const luckyUrl = safeUrl(luckyPlace.googleMapUrl);
                 luckyPlace.marker.setPopupContent(`
                     <div style="font-size:13px; color:#3A5DA0; font-weight:700; margin-bottom:6px;"><i class="ph ph-dice-five"></i>今晚就決定是你了！</div>
-                    <div class="popup-title">${luckyPlace.name}</div>
-                    <div style="font-size:14px; color:#666; line-height:1.5;">${luckyPlace.note || luckyPlace.area}</div>
-                    <a href="${luckyPlace.googleMapUrl}" target="_blank" class="popup-link">在 Google Maps 中開啟 ↗</a>
+                    <div class="popup-title">${esc(luckyPlace.name)}</div>
+                    <div style="font-size:14px; color:#666; line-height:1.5;">${esc(luckyPlace.note || luckyPlace.area)}</div>
+                    ${luckyUrl ? `<a href="${esc(luckyUrl)}" target="_blank" rel="noopener noreferrer" class="popup-link">在 Google Maps 中開啟 ↗</a>` : ''}
                 `);
                 luckyPlace.marker.openPopup();
             }, 1500);
