@@ -534,35 +534,6 @@
             });
         }
 
-        // 定位使用者目前位置
-        let userMarker = null;
-        function locateUser() {
-            const btn = document.getElementById('locate-btn');
-            if (!navigator.geolocation) {
-                alert('你的瀏覽器不支援定位功能');
-                return;
-            }
-            btn.classList.add('locating');
-            // 手機若在清單畫面，先切到地圖
-            if (window.innerWidth <= 768 && !showingMap) {
-                toggleMobileView();
-            }
-            map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
-        }
-        map.on('locationfound', function(e) {
-            document.getElementById('locate-btn').classList.remove('locating');
-            if (userMarker) { map.removeLayer(userMarker); }
-            userMarker = L.circleMarker(e.latlng, {
-                radius: 9, color: '#000000', weight: 2,
-                fillColor: '#3A5DA0', fillOpacity: 1
-            }).addTo(map);
-            userMarker.bindPopup('<div class="popup-title">你在這裡</div>').openPopup();
-        });
-        map.on('locationerror', function(e) {
-            document.getElementById('locate-btn').classList.remove('locating');
-            alert('無法取得定位：' + e.message + '\n（定位需要 HTTPS 網頁，並允許瀏覽器的位置權限）');
-        });
-
         function toggleTags() {
             const container = document.getElementById('tag-filters');
             const btn = document.getElementById('tag-toggle');
